@@ -1,0 +1,112 @@
+# LLM Router Gateway Configuration
+# =================================
+
+# Routing Strategy
+routing:
+  strategy: "cost_optimized"  # cost_optimized, latency_optimized, round_robin, weighted, task_optimized, least_loaded
+  
+  fallback_chain:
+    - "openai"
+    - "anthropic"
+    - "cohere"
+  
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 60
+  
+  # Task-specific routing
+  task_routing:
+    chat:
+      preferred_providers: ["openai", "anthropic"]
+      max_cost_per_request: 0.05
+      max_latency_ms: 3000
+    
+    completion:
+      preferred_providers: ["openai", "cohere"]
+      max_cost_per_request: 0.03
+      max_latency_ms: 2000
+    
+    code:
+      preferred_providers: ["openai"]
+      max_cost_per_request: 0.1
+      max_latency_ms: 5000
+    
+    embedding:
+      preferred_providers: ["openai"]
+      max_cost_per_request: 0.01
+      max_latency_ms: 1000
+
+# Provider Configuration
+providers:
+  - provider_type: "openai"
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+    cost_per_1k_input: 0.03
+    cost_per_1k_output: 0.06
+    rate_limit_rpm: 60
+    priority: 1
+    enabled: true
+  
+  - provider_type: "openai"
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-3.5-turbo"
+    cost_per_1k_input: 0.0015
+    cost_per_1k_output: 0.002
+    rate_limit_rpm: 60
+    priority: 2
+    enabled: true
+  
+  - provider_type: "anthropic"
+    api_key: "${ANTHROPIC_API_KEY}"
+    model: "claude-3-opus-20240229"
+    cost_per_1k_input: 0.015
+    cost_per_1k_output: 0.075
+    rate_limit_rpm: 40
+    priority: 1
+    enabled: true
+  
+  - provider_type: "anthropic"
+    api_key: "${ANTHROPIC_API_KEY}"
+    model: "claude-3-sonnet-20240229"
+    cost_per_1k_input: 0.003
+    cost_per_1k_output: 0.015
+    rate_limit_rpm: 40
+    priority: 2
+    enabled: true
+  
+  - provider_type: "cohere"
+    api_key: "${COHERE_API_KEY}"
+    model: "command"
+    cost_per_1k_input: 0.0015
+    cost_per_1k_output: 0.002
+    rate_limit_rpm: 100
+    priority: 3
+    enabled: true
+
+# Cache Configuration
+cache:
+  type: "memory"  # memory or redis
+  enabled: true
+  default_ttl: 3600
+  max_size: 10000
+  
+  # Redis configuration (if type is redis)
+  # redis_url: "redis://localhost:6379"
+  # prefix: "llm_cache:"
+
+# Gateway Configuration
+gateway:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  timeout: 60
+  
+  cors:
+    enabled: true
+    origins: ["*"]
+
+# Monitoring
+monitoring:
+  enabled: true
+  log_level: "INFO"
+  metrics_port: 9090
